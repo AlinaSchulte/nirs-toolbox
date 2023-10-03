@@ -28,39 +28,64 @@ classdef AddShortSeperationRegressors < nirs.modules.AbstractModule
                 tmp=nirs.core.Data;
                 tmp.time=data(i).time;
                 tmp.data=dd;
-                j=nirs.modules.FixNaNs;
-                tmp=j.run(tmp);
+               %j=nirs.modules.FixNaNs;
+                %tmp=j.run(tmp);
                 dd=tmp.data;
-                
-                if(~obj.scICA)
-                    dd=orth(dd);
-                else
-                     dd2=[dd, [diff(dd); zeros(1,size(dd,2))],[diff(diff(dd)); zeros(2,size(dd,2))]]; 
-                   
-                   dd=orth(dd2);
-%                    [in,f]=nirs.math.innovations(dd,1*data(i).Fs);
-%                    dd2=[]; 
-%                    n=1;
-%                    for id=1:length(f); n=max(n,length(f{id})); end;
-%                    for id=1:size(dd,2); 
-%                        a=convmtx(in(:,id),n); 
-%                        dd2=[dd2 a]; 
-%                    end;
-%                    dd2=dd2(1:size(dd,1),:);
-%                    dd=orth(dd2);
-               end
-                        
-                for j=1:size(dd,2)
+
+                % remove columns with NaNs
+              cols_todel = find(all(isnan(dd),1)); % columns with bad short channels
+              dd(:,cols_todel)=[];
+
+                for j= 1:size(dd,2) % loop through all short channel traces
                     st=nirs.design.StimulusVector;
 
                     st.regressor_no_interest=true;
-                    st.name=['SS_PCA' num2str(j)];
+                    st.name=['SC_' num2str(j)];
                     st.time=data(i).time;
                     st.vector=dd(:,j);
                     st.vector=st.vector-mean(st.vector);
                     st.vector=st.vector./sqrt(var(st.vector));
                     data(i).stimulus(st.name)=st;  
                 end
+                
+
+
+
+%                 if(~obj.scICA)
+%                     dd=orth(dd);
+%                 else
+%                      dd2=[dd, [diff(dd); zeros(1,size(dd,2))],[diff(diff(dd)); zeros(2,size(dd,2))]]; 
+% 
+%                    dd=orth(dd2);
+% %                    [in,f]=nirs.math.innovations(dd,1*data(i).Fs);
+% %                    dd2=[]; 
+% %                    n=1;
+% %                    for id=1:length(f); n=max(n,length(f{id})); end;
+% %                    for id=1:size(dd,2); 
+% %                        a=convmtx(in(:,id),n); 
+% %                        dd2=[dd2 a]; 
+% %                    end;
+% %                    dd2=dd2(1:size(dd,1),:);
+% %                    dd=orth(dd2);
+%                end
+                        
+                % for j= 1:3 %j=1:size(dd,2)   % aicu: limited to only the first three PCA regressors
+                %     st=nirs.design.StimulusVector;
+                % 
+                %     st.regressor_no_interest=true;
+                %     st.name=['SS_PCA' num2str(j)];
+                %     st.time=data(i).time;
+                %     st.vector=dd(:,j);
+                %     st.vector=st.vector-mean(st.vector);
+                %     st.vector=st.vector./sqrt(var(st.vector));
+                %     data(i).stimulus(st.name)=st;  
+                % end
+                
+
+                % aicu: don't use PCA, but all available HbO and HbR traces
+                % of short channels instead:
+
+
                 
             end
         end
